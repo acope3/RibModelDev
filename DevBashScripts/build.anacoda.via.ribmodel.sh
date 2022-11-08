@@ -17,14 +17,24 @@
 #
 #  Local install
 
-if R CMD build RibModelFramework ; then
+rVersion=$(Rscript -e 'cat(paste0(R.version$major, ".", sub("\\.[0-9]+", "", R.version$minor)))')
+echo "$rVersion"
+installDir="~/R/lib/$rVersion-dev/"
+echo "$installDir"
+
+if R CMD build --no-build-vignettes RibModelFramework ; then
     echo "Build succeeded. Installing package";
     MAKE="make -j$(($(nproc)-1))"; #use 1 less than number of cores on machine
-    if R CMD INSTALL -l ~/R/lib-dev $(ls -t AnaCoDa_*.tar.gz| head -1) ; then
+    if R CMD INSTALL -l "$installDir" $(ls -t AnaCoDa_*.tar.gz| head -1) ; then
 	echo "Install succeeded."
 	## test code
 	cd RibModelFramework/tests;
-	if Rscript -e ".libPaths(\"~/R/lib-dev\"); .libPaths(); source(\"testthat.R\"); packageVersion(\"AnaCoDa\")"; then
+	## keep this one long command (note the double quotes
+	if Rscript -e ".libPaths(\"$installDir\"); 
+	   .libPaths(); \\
+	   source(\"testthat.R\"); \\
+	   packageVersion(\"AnaCoDa\")"; 
+	then
 	    echo "TestThat succeeded"
 	else
 	    echo "TestThat failed"
